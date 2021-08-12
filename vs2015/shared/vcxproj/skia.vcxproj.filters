@@ -1935,6 +1935,12 @@
     <ClCompile Include="..\..\..\tools\trace\SkEventTracingPriv.cpp">
       <Filter>tools\trace</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\src\c\sk_effects.cpp">
+      <Filter>src\c</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\..\src\c\sk_matrix.cpp">
+      <Filter>src\c</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="../../../src/core/SkTDPQueue.h" />

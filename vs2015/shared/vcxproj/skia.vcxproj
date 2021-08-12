@@ -683,6 +683,8 @@
     <ClCompile Include="../../../src/pathops/SkReduceOrder.cpp" />
     <ClCompile Include="../../../src/jumper/SkJumper.cpp" />
     <ClCompile Include="../../../src/jumper/SkJumper_stages.cpp" />
+    <ClCompile Include="..\..\..\src\c\sk_effects.cpp" />
+    <ClCompile Include="..\..\..\src\c\sk_matrix.cpp" />
     <ClCompile Include="..\..\..\src\extention_dll\win\GLContext_angle.cpp" />
     <ClCompile Include="..\..\..\src\ports\SkFontMgr_win_gdi_factory.cpp" />
     <ClCompile Include="..\..\..\tools\trace\SkChromeTracingTracer.cpp" />
