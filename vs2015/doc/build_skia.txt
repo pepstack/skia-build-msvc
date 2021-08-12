@@ -1,0 +1,144 @@
+1.download and install git
+2.download and install python
+3.download depot_tools
+	git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
+4.download skia to particular version
+	git clone https://skia.googlesource.com/skia.git
+	cd skia
+	git checkout -b new_branch hash
+		note: new_branch is your new branch name; hash is the version your want to use;
+		example:
+			new_branch	: skia_20170825-045247
+			hash 		: dfcb14a34920244924eeb6ff874c10d7387246f5
+5.set python path and depot_tools path
+	use start_vs2015.bat 
+		@set depot_tools_path=C:\google\depot_tools
+		@set python_path=C:\Python27
+		@set PATH=%PATH%;%depot_tools_path%;%python_path%;
+6.download skia dependents
+	run start_vs2015.bat
+	cd skia
+	python tools/git-sync-deps
+
+7.ninja build
+	bin\gn gen ninja/x64_Static_Debug --args="is_debug=true skia_use_egl=true skia_use_angle=true" --ide=vs --sln=skia
+	need ninja.exe
+		need add C:\google\depot_tools to PATH environment variable.
+	need python
+		need add C:\Python27 to PATH environment variable.
+	need to fix following ninja build errors:
+		ninja build error:
+		1.FAILED: gen/angle2/id/commit.h
+			solution :  1. Follow the file "vs2015\doc\skia\third_party\angle2\BUILD.gn" modify "third_party\angle2\BUILD.gn"; 2. regenerate ninja skia;
+		2.FAILED: “id/commit.h”: No such file or directory
+			solution : 1. Copy "third_party\externals\angle2\src\commit.h" to "third_party\externals\angle2\src\common\id\commit.h"
+		3.FAILED: “EGL/egl.h”: No such file or directory
+			solution : 
+				Modify gpu.ninja 	: include_dirs add -I../../third_party/externals/angle2/include
+				Modify gpu.vcxproj 	: <AdditionalIncludeDirectories> add ../../third_party/externals/angle2/include
+		4.FAILED: createplatformgltestcontext_egl.cpp(225): warning C4312: 
+			solution :
+				Modify gpu_tool_utils.ninja  cflags add /wd4312
+				Modify gpu_tool_utils.vcxproj  <DisableSpecificWarnings> add 4312
+		5.FAILED: fatal error LNK1181: “EGL.obj”
+			solution : 
+				Modify SampleApp.ninja 
+					defines add -DDEFAULT_TO_ANGLE
+					libs = FontSub.lib Ole32.lib OleAut32.lib User32.lib libEGL.dll.lib OpenGL32.lib kernel32.lib gdi32.lib
+8.vs2015 build
+	generate vs2015 projects without ninja
+		build 64bit static debug:
+			gn gen vs2015/x64_static_debug --args="is_debug=true skia_use_egl=true skia_use_angle=true" --ide=vs --sln=skia	
+			MsvcProjTool modify obj's ninja vcxprojs to vcxproj's vs2015 vcxprojs
+			skia.sln : modify obj/ to vcxproj/
+			need spirv-tools/*.inc : generate from ninja
+		
+	libGLESv2:
+		Specifies an object (.obj) file name to be used instead of the default.
+			translator\Compiler.cpp Compiler_translator.obj
+			common\debug.cpp debug_common.obj
+		link libs : d3d9.lib
+		libGLESv2.rc : file type resource compiler
+		module def file : ../../../../../third_party/externals/angle2/src/libGLESv2/libGLESv2.def
+	libEGL: 
+		link libs : libGLESv2.lib
+		lib dir : $(OutDir)
+		libEGL.rc : file type resource compiler
+		module def file : ../../../../../third_party/externals/angle2/src/libEGL/libEGL.def
+	spirv-tools:
+		Specifies an object (.obj) file name to be used instead of the default.
+			source\opt\basic_block.cpp basic_block_opt.obj
+			source\opt\function.cpp function_opt.obj
+			source\opt\instruction.cpp instruction_opt.obj
+	gpu:
+		include dir : ../../../third_party/externals/angle2/include
+		source files:
+			remove GrAHardwareBufferImageGenerator.cpp
+	gpu_tool_utils:
+		createplatformgltestcontext_egl.cpp(225): warning C4312: 
+		Modify gpu_tool_utils.vcxproj  <DisableSpecificWarnings> add 4312
+	views:
+		error C2664: “HMODULE GetModuleHandleW(LPCWSTR)”
+			solution : GetModuleHandle change to GetModuleHandleA
+	skia:
+		../../../src/android/SkAndroidFrameworkUtils.cpp(8): fatal error C1083: 
+			solution : remove android from project
+		remove utils\mac from project
+		remove core\SkDebug.cpp
+		SkJumper_generated_win.S : 
+			for different platform and configuration, we need different suffix.obj(example _x64_static_debug.obj)
+			custom build tools
+				In command line: ml64 /Fo "%(Filename)_x64_static_debug.obj" /c "..\..\..\src\jumper\SkJumper_generated_win.S"
+				description: build %(Filename).s file to %(Filename)_x64_static_debug.obj
+				Output: %(fileName)_x64_static_debug.obj
+			
+	SampleApp:
+		lib directory: $(OutDir)
+		libs:
+			views.lib;gpu_tool_utils.lib;pdf.lib;experimental_svg_model.lib;xml.lib;expat.lib;tool_utils.lib;skia.lib;avx.lib;effects.lib;gpu.lib;jpeg.lib;png.lib;sse2.lib;sse41.lib;sse42.lib;ssse3.lib;webp.lib;libEGL.lib;spirv-tools.lib;libjpeg.lib;libpng.lib;libwebp.lib;libwebp_avx2.lib;libwebp_sse41.lib;zlib.lib;zlib_x86.lib;OpenGL32.lib;Usp10.lib;
+		source code:
+			tools/flags/SkCommonFlags.cpp
+			tools/flags/SkCommonFlagsConfig.cpp
+			tools/flags/SkCommandLineFlags.cpp
+			copy samples project's items to SampleApp project; 
+			add include dir: ../../../experimental/svg/model
+			copy gm project's items to SampleApp project;
+			Macro: DEFAULT_TO_ANGLE
+	viewer:
+		lib directory: $(OutDir)
+		libs:
+			imgui.lib;jsoncpp.lib;views.lib;gpu_tool_utils.lib;pdf.lib;experimental_svg_model.lib;xml.lib;expat.lib;tool_utils.lib;skia.lib;avx.lib;effects.lib;gpu.lib;jpeg.lib;png.lib;sse2.lib;sse41.lib;sse42.lib;ssse3.lib;webp.lib;libEGL.lib;spirv-tools.lib;libjpeg.lib;libpng.lib;libwebp.lib;libwebp_avx2.lib;libwebp_sse41.lib;zlib.lib;zlib_x86.lib;OpenGL32.lib;Usp10.lib;
+			
+	for debug : all project's need to adjust by yourself
+	
+	kGPU_DeviceType -> Failed to setup 3D
+		gpu remove src/gpu/gl/egl
+		gpu add src/gpu/gl/win
+		
+8.vs2015 build shared 64bit debug
+	generate vs2015 projects without ninja
+		build 64bit static debug:
+			gn gen vs2015/x64_shared_debug --args="is_component_build=true is_debug=true skia_use_egl=true skia_use_angle=true" --ide=vs --sln=skia	
+			MsvcProjTool modify obj's ninja vcxprojs to vcxproj's vs2015 vcxprojs
+			skia.sln : modify obj/ to vcxproj/
+			
+	avx: disable warning 4251
+	effects: disable warning 4251
+	gpu: disable warning 4251
+	jpeg: disable warning 4251
+	png: disable warning 4251
+	sse2: disable warning 4251
+	sse41: disable warning 4251
+	sse42: disable warning 4251
+	ssse3: disable warning 4251
+	webp: disable warning 4251
+	skia: 
+		disable warning 4251
+		remove SkDocument.cpp SkMultiPictureDocument.cpp SkXPSDocument.cpp SkXPSDevice.cpp
+		libs: avx.lib;effects.lib;gpu.lib;jpeg.lib;png.lib;sse2.lib;sse41.lib;sse42.lib;ssse3.lib;webp.lib;libEGL.lib;libjpeg.lib;libpng.lib;libwebp.lib;libwebp_avx2.lib;libwebp_sse41.lib;zlib.lib;zlib_x86.lib;OpenGL32.lib;Usp10.lib;
+	
+				
+8.vs2015 build shared 32bit debug
+	need change or disable skia\src\ports\SkImageGeneratorWIC.cpp
+	need change skia\include\gpu\gl\GrGLFunctions.h
+	need disable skia\src\gpu\gl\GrGLTestInterface.cpp

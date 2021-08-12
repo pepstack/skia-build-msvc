@@ -1,0 +1,20 @@
+20191011
+    // Force git to always ask for a password
+    git config --local credential.helper ''
+
+20180929
+	the original dependent tool gn.exe
+
+20180929
+	the original dependent tools and scripts submission
+
+20180929
+	Based on skia version dfcb14a34920244924eeb6ff874c10d7387246f5, the original dependent libraries submission
+
+20180929
+	Based on skia version dfcb14a34920244924eeb6ff874c10d7387246f5, the original submission
+	
+20180929
+	skia from https://skia.googlesource.com/skia.git 
+		version_hash(dfcb14a34920244924eeb6ff874c10d7387246f5)
+		branch_name(Branch_20170825-045247)
